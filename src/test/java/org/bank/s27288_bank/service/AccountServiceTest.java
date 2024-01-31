@@ -2,12 +2,10 @@ package org.bank.s27288_bank.service;
 
 import org.bank.s27288_bank.exception.ValidationException;
 import org.bank.s27288_bank.model.account.Account;
-import static org.bank.s27288_bank.model.account.CurrencyType.*;
+import org.bank.s27288_bank.model.account.CurrencyType;
 
-import org.bank.s27288_bank.model.client.Client;
 import org.bank.s27288_bank.repository.AccountRepository;
 
-import org.bank.s27288_bank.repository.ClientRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,24 +23,12 @@ public class AccountServiceTest {
     @BeforeAll
     static void setUp() {
         accountRepository = new AccountRepository();
-        accountService = new AccountService(accountRepository, new ClientService(new ClientRepository()));
-        Client client = new Client(null, "Jan", "Kowalski", "12345678901");
-        ClientRepository clientRepository = new ClientRepository();
-        clientRepository.create(client);
+        accountService = new AccountService(accountRepository);
     }
 
     @AfterEach
     void cleanUp() {
         accountRepository.removeAll();
-    }
-
-    @Test
-    void shouldCorrectlyCreateNewAccount(){
-        Account account = new Account(null, 0, PLN, 100.0, ClientRepository.getName(0), ClientRepository.getSurname(0), ClientRepository.getPesel(0));
-
-        Account result = assertDoesNotThrow(() -> accountService.create(account));
-
-        assertEquals(account.getBalance(), result.getBalance());
     }
 
     @Test
@@ -53,32 +39,52 @@ public class AccountServiceTest {
     }
 
     @Test
-    void shouldNotCreateNewAccount() {
-        Account account = new Account(null, 0, PLN, -100.0, ClientRepository.getName(0), ClientRepository.getSurname(0), ClientRepository.getPesel(0));
+    void shouldCorrectlyCreateNewAccount(){
+        Account result = assertDoesNotThrow(() -> accountService.create("Jan", "Kowalski", "12345678901", CurrencyType.PLN, 100.0));
 
-        ValidationException exception = assertThrows(ValidationException.class, () -> accountService.create(account));
+        assertEquals(100.0, result.getBalance());
+    }
 
-        assertEquals("Balance cannot be negative, Balance", exception.getMessage());
+    @Test
+    void shouldThrowInvalidPeselLenghtException() {
+        ValidationException exception = assertThrows(ValidationException.class, () -> accountService.create("Jan", "Kowalski", "1234567890", CurrencyType.PLN, 100.0));
+
+        assertEquals("Pesel needs to have 11 digits - Pesel", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowInvalidPeselException() {
+        ValidationException exception = assertThrows(ValidationException.class, () -> accountService.create("Jan", "Kowalski", "1234567890a", CurrencyType.PLN, 100.0));
+
+        assertEquals("Pesel can only contain digits - Pesel", exception.getMessage());
+    }
+
+    @Test
+    void shouldCreateAccountsAndGetSize() {
+        accountService.create("Jan", "Kowalski", "12345678901", CurrencyType.PLN, 100.0);
+        accountService.create("Piotr", "Nowak", "12345678902", CurrencyType.EUR, 200.0);
+        accountService.create("Anna", "Kowalska", "12345678903", CurrencyType.USD, 300.0);
+
+        List<Account> result = accountService.getAllAccounts();
+
+        assertEquals(3, result.size());
+    }
+
+    @Test
+    void shouldCorrectlyReturnAccountById() {
+        Account createdAccount = accountService.create("Jan", "Kowalski", "12345678901", CurrencyType.PLN, 100.0);
+
+        Account result = accountService.getById(createdAccount.getId());
+
+        assertEquals(createdAccount.getId(), result.getId());
     }
 
     @ParameterizedTest
     @MethodSource("provideInvalidBalance")
     void shouldNotCreateNewAccountWithInvalidBalance(Double balance) {
-        Account account = new Account(null, 0, PLN, balance, ClientRepository.getName(0), ClientRepository.getSurname(0), ClientRepository.getPesel(0));
+        ValidationException exception = assertThrows(ValidationException.class, () -> accountService.create("Jan", "Kowalski", "12345678901", CurrencyType.PLN, balance));
 
-        ValidationException exception = assertThrows(ValidationException.class, () -> accountService.create(account));
-
-        assertEquals("Balance cannot be negative, Balance", exception.getMessage());
-    }
-
-    @Test
-    void shouldCorrectlyReturnAccountById() {
-        Account account = new Account(null, 0, PLN, 100.0, ClientRepository.getName(0), ClientRepository.getSurname(0), ClientRepository.getPesel(0));
-        Account createdAccount = accountService.create(account);
-
-        Account result = accountService.getById(createdAccount.getId());
-
-        assertEquals(createdAccount.getId(), result.getId());
+        assertEquals("Balance cannot be negative - Balance", exception.getMessage());
     }
 
     private static Stream<Arguments> provideInvalidBalance() {

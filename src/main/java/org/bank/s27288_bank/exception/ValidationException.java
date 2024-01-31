@@ -17,15 +17,8 @@ public class ValidationException extends RuntimeException {
         this.field = field;
     }
 
-    public ValidationException(String message, Map<String, String> errors) {
-        super(message);
-        this.message = message;
-        this.errors = errors;
-    }
-
     @Override
     public String getMessage() {
-        return field + ", " + message;
+        return field + " - " + message;
     }
-
 }

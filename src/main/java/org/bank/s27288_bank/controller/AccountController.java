@@ -25,7 +25,6 @@ public class AccountController {
     @GetMapping
     public ResponseEntity<Account> getAccountByParam(@RequestParam(required = false) Integer id) {
         Account account = accountService.getById(id);
-
         return ResponseEntity.ok(account);
     }
 
@@ -37,7 +36,7 @@ public class AccountController {
 
     @PostMapping("/create")
     public ResponseEntity<Account> createAccount(@RequestBody Account account) {
-        Account createdAccount = accountService.create(account);
+        Account createdAccount = accountService.create(account.getName(), account.getSurname(), account.getPesel(), account.getCurrencyType(), account.getBalance());
         return ResponseEntity.status(HttpStatusCode.valueOf(201)).body(createdAccount);
     }
 }

@@ -7,10 +7,9 @@ import lombok.Data;
 @AllArgsConstructor
 public class Account {
     private Integer id;
-    private Integer clientId;
-    private CurrencyType currency;
-    private Double balance;
     private String name;
     private String surname;
     private String pesel;
+    private CurrencyType currencyType;
+    private Double balance;
 }

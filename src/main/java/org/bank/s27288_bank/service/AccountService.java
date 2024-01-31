@@ -1,14 +1,12 @@
 package org.bank.s27288_bank.service;
 
-import lombok.RequiredArgsConstructor;
-import org.bank.s27288_bank.exception.ValidationException;
 import org.bank.s27288_bank.model.account.Account;
-import org.bank.s27288_bank.model.client.Client;
+import org.bank.s27288_bank.model.account.CurrencyType;
 import org.bank.s27288_bank.repository.AccountRepository;
-import org.bank.s27288_bank.repository.ClientRepository;
-
+import org.bank.s27288_bank.exception.ValidationException;
 
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -17,22 +15,38 @@ import java.util.List;
 public class AccountService {
 
     private final AccountRepository accountRepository;
-    private final ClientService clientService;
 
-    public Account create(Account account) {
-        if (account.getClientId() == null) {
-            throw new ValidationException("Client ID", "Client ID cannot be empty");
+    public Account create(String name, String surname, String pesel, CurrencyType currencyType, Double balance) {
+        // Validate if Null
+        if (currencyType == null) {
+            throw new ValidationException("CurrencyType", "CurrencyType cannot be empty");
         }
-        if (account.getCurrency() == null) {
-            throw new ValidationException("Currency", "Currency cannot be empty");
-        }
-        if (account.getBalance() == null) {
+        if (balance == null) {
             throw new ValidationException("Balance", "Balance cannot be empty");
         }
-        if (account.getBalance() < 0) {
+        if (name == null || name.isEmpty()) {
+            throw new ValidationException("Name", "Name cannot be empty");
+        }
+        if (surname == null || surname.isEmpty()) {
+            throw new ValidationException("Surname", "Surname cannot be empty");
+        }
+        if (pesel == null || pesel.isEmpty()) {
+            throw new ValidationException("Pesel", "Pesel cannot be empty");
+        }
+
+        // Others Validations
+        if (balance < 0) {
             throw new ValidationException("Balance", "Balance cannot be negative");
         }
-        Client client = clientService.getById(account.getClientId());
+        if (pesel.length() != 11) {
+            throw new ValidationException("Pesel", "Pesel needs to have 11 digits");
+        }
+        if (pesel.chars().anyMatch(it -> !Character.isDigit(it))) {
+            throw new ValidationException("Pesel", "Pesel can only contain digits");
+        }
+
+        var id = accountRepository.getId();
+        var account = new Account(id, name, surname, pesel, currencyType, balance);
         return accountRepository.create(account);
     }
 

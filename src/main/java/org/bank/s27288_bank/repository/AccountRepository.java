@@ -1,10 +1,10 @@
 package org.bank.s27288_bank.repository;
 
-
 import org.bank.s27288_bank.model.account.Account;
-import org.bank.s27288_bank.model.client.Client;
 
 import org.springframework.stereotype.Repository;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,9 +14,13 @@ import java.util.Optional;
 public class AccountRepository {
     private List<Account> accountList = new ArrayList<>();
 
+    @Setter
+    @Getter
+    private Integer id = 0;
+
     public Account create(Account account) {
-        account.setId(accountList.size());
         accountList.add(account);
+        id++;
         return account;
     }
     public Optional<Account> getById(Integer id){
@@ -25,7 +29,6 @@ public class AccountRepository {
                 .filter(it -> it.getId().equals(id))
                 .findFirst();
     }
-    //create code for getting all acount with balance bigger than 100
     public List<Account> getByBalance(double balance){
         return accountList
                 .stream()
@@ -47,8 +50,7 @@ public class AccountRepository {
         Optional<Account> accountToModify = getById(account.getId());
 
         return accountToModify.map(it -> {
-            it.setClientId(account.getClientId());
-            it.setCurrency(account.getCurrency());
+            it.setCurrencyType(account.getCurrencyType());
             it.setBalance(account.getBalance());
             return it;
         });
